@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import ProviderCard from './components/ProviderCard'
+import ResponseTimeChart from './components/ResponseTimeChart'
+import CpuChart from './components/CpuChart'
+import CostChart from './components/CostChart'
 
 function App() {
   const [metrics, setMetrics] = useState(null)
@@ -64,6 +67,25 @@ function App() {
             <ProviderCard data={metrics.cloudflare} providerKey="cloudflare" />
           </div>
         </section>
+        {/* Charts Section */}
+<section>
+  <h2 className="section-title text-center mb-6">
+    📊 Performance Comparison
+  </h2>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <ResponseTimeChart
+      awsResponseTime={metrics.aws.responseTime}
+      cfResponseTime={metrics.cloudflare.responseTime}
+    />
+    <CpuChart
+      awsCpu={metrics.aws.cpu}
+      cfCpu={metrics.cloudflare.cpu}
+    />
+  </div>
+  <div className="mt-6">
+    <CostChart />
+  </div>
+</section>
       </main>
 
     </div>
