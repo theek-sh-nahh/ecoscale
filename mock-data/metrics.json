@@ -1,0 +1,22 @@
+{
+  "aws": {
+    "provider": "AWS EC2",
+    "instance": "t2.micro",
+    "region": "ap-south-1",
+    "cpu": 42,
+    "memory": 67,
+    "uptime": 99.95,
+    "responseTime": 184,
+    "monthlyCost": 8.50
+  },
+  "cloudflare": {
+    "provider": "Cloudflare Workers",
+    "instance": "Edge Compute",
+    "region": "Global (300+ locations)",
+    "cpu": 18,
+    "memory": 28,
+    "uptime": 99.99,
+    "responseTime": 34,
+    "monthlyCost": 0.00
+  }
+}
