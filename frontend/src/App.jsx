@@ -1,122 +1,74 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useState, useEffect } from 'react'
+import ProviderCard from './components/ProviderCard'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState(null)
+
+  useEffect(() => {
+    const loadMetrics = async () => {
+      try {
+        const res = await fetch('http://localhost:3001/api/metrics')
+        const json = await res.json()
+        setMetrics(json.data)
+        setLastUpdated(new Date().toLocaleTimeString())
+      } catch (err) {
+        console.error('Failed to fetch metrics:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadMetrics()
+    const interval = setInterval(loadMetrics, 10000)
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🌿</div>
+          <p className="text-text-muted font-medium">Loading EcoScale...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+  <div className="min-h-screen bg-leaf-pattern">
+    <div className="max-w-7xl mx-auto px-6 py-10">
+      <header className="mb-10 text-center">
+        <div className="flex items-center justify-center gap-2 mb-2">
+          <span className="text-3xl">🌿</span>
+          <h1 className="text-3xl font-bold text-sage-600">
+            EcoScale
+          </h1>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+        <p className="text-text-muted text-sm">
+          Green Cloud Resource Analyzer · Comparing compute efficiency across providers
+        </p>
+        <p className="text-xs text-sage-400 mt-3 font-mono bg-white inline-block px-3 py-1 rounded-full border border-sage-100 shadow-sm">
+            Last updated: <span className="text-sage-600 font-semibold">{lastUpdated}</span>
           </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="space-y-10">
+        <section>
+          <h2 className="section-title text-center mb-6">
+            🖥️ Live Instance Metrics
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ProviderCard data={metrics.aws} providerKey="aws" />
+            <ProviderCard data={metrics.cloudflare} providerKey="cloudflare" />
+          </div>
+        </section>
+      </main>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    </div>
+  </div>
+)
 }
 
 export default App
