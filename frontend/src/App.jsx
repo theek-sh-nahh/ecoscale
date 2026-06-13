@@ -7,22 +7,37 @@ import RecommendationPanel from './components/RecommendationPanel'
 import EfficiencyScore from './components/EfficiencyScore'
 import { useDarkMode } from './hooks/useDarkMode'
 
+const AWS_URL = 'http://3.108.53.158:3000'
+const CF_URL  = 'https://ecoscale-worker.thshna9339.workers.dev'
+
 function App() {
-  const [metrics, setMetrics]       = useState(null)
-  const [loading, setLoading]       = useState(true)
+  const [metrics, setMetrics]         = useState(null)
+  const [loading, setLoading]         = useState(true)
   const [lastUpdated, setLastUpdated] = useState(null)
-  const [refreshing, setRefreshing] = useState(false)
-  const [isDark, setIsDark]         = useDarkMode()
+  const [refreshing, setRefreshing]   = useState(false)
+  const [isDark, setIsDark]           = useDarkMode()
+  const [error, setError]             = useState(null)
 
   useEffect(() => {
     const loadMetrics = async () => {
       try {
-        const res  = await fetch('http://localhost:3001/api/metrics')
-        const json = await res.json()
-        setMetrics(json.data)
+        const [awsRes, cfRes] = await Promise.all([
+          fetch(`${AWS_URL}/metrics`),
+          fetch(`${CF_URL}/metrics`),
+        ])
+
+        const awsJson = await awsRes.json()
+        const cfJson  = await cfRes.json()
+
+        setMetrics({
+          aws:        awsJson.data,
+          cloudflare: cfJson.data,
+        })
         setLastUpdated(new Date().toLocaleTimeString())
+        setError(null)
       } catch (err) {
         console.error('Failed to fetch metrics:', err)
+        setError('Failed to fetch from one or more providers')
       } finally {
         setLoading(false)
         setRefreshing(false)
@@ -37,12 +52,20 @@ function App() {
   const handleRefresh = async () => {
     setRefreshing(true)
     try {
-      const res  = await fetch('http://localhost:3001/api/metrics')
-      const json = await res.json()
-      setMetrics(json.data)
+      const [awsRes, cfRes] = await Promise.all([
+        fetch(`${AWS_URL}/metrics`),
+        fetch(`${CF_URL}/metrics`),
+      ])
+      const awsJson = await awsRes.json()
+      const cfJson  = await cfRes.json()
+      setMetrics({
+        aws:        awsJson.data,
+        cloudflare: cfJson.data,
+      })
       setLastUpdated(new Date().toLocaleTimeString())
+      setError(null)
     } catch (err) {
-      console.error('Failed to fetch metrics:', err)
+      setError('Refresh failed')
     } finally {
       setRefreshing(false)
     }
@@ -53,7 +76,9 @@ function App() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-5xl mb-4 animate-bounce">🌿</div>
-          <p className="text-text-muted font-medium">Loading EcoScale...</p>
+          <p className="text-text-muted font-medium">
+            Fetching live metrics from AWS & Cloudflare...
+          </p>
         </div>
       </div>
     )
@@ -63,11 +88,9 @@ function App() {
     <div className="min-h-screen bg-leaf-pattern">
       <div className="max-w-7xl mx-auto px-6 py-10">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <header className="mb-10">
           <div className="flex items-center justify-between flex-wrap gap-4">
-
-            {/* Left — title */}
             <div className="flex items-center gap-3">
               <span className="text-4xl">🌿</span>
               <div>
@@ -80,62 +103,57 @@ function App() {
               </div>
             </div>
 
-            {/* Right — controls */}
             <div className="flex items-center gap-3">
-
-              {/* Live pulse */}
-              <div className="flex items-center gap-2 bg-white dark:bg-sage-800
-                              border border-sage-100 rounded-full px-3 py-1.5 shadow-sm">
+              <div className="flex items-center gap-2 bg-white border
+                              border-sage-100 rounded-full px-3 py-1.5 shadow-sm">
                 <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full
-                                   rounded-full bg-sage-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-sage-500" />
+                  <span className="animate-ping absolute inline-flex h-full
+                                   w-full rounded-full bg-sage-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2
+                                   bg-sage-500" />
                 </span>
                 <span className="text-xs text-text-muted font-mono">
                   {lastUpdated}
                 </span>
               </div>
 
-              {/* Refresh button */}
               <button
                 onClick={handleRefresh}
                 disabled={refreshing}
                 className="flex items-center gap-2 bg-sage-500 hover:bg-sage-600
                            text-white text-xs font-medium px-4 py-2 rounded-full
-                           transition-all duration-200 disabled:opacity-50
-                           shadow-sm hover:shadow-md"
+                           transition-all duration-200 disabled:opacity-50 shadow-sm"
               >
                 <span className={refreshing ? 'animate-spin' : ''}>↻</span>
                 {refreshing ? 'Refreshing...' : 'Refresh'}
               </button>
 
-              {/* Dark mode toggle */}
               <button
                 onClick={() => setIsDark(!isDark)}
                 className="w-9 h-9 flex items-center justify-center rounded-full
                            bg-white border border-sage-100 shadow-sm
                            hover:shadow-md transition-all duration-200 text-base"
-                title="Toggle dark mode"
               >
                 {isDark ? '☀️' : '🌙'}
               </button>
-
             </div>
           </div>
 
-          {/* Subtitle */}
           <p className="text-sm text-text-muted mt-4 text-center">
-            Comparing compute efficiency · AWS EC2 vs Cloudflare Workers · Auto-refreshes every 10s
+            Live metrics · AWS EC2 t3.micro (Mumbai) vs Cloudflare Workers (Edge) · Auto-refreshes every 10s
           </p>
+
+          {error && (
+            <p className="text-xs text-red-400 text-center mt-2">
+              ⚠️ {error}
+            </p>
+          )}
         </header>
 
-        {/* ── Main ── */}
+        {/* Main */}
         <main className="space-y-10">
-
-          {/* Efficiency Score */}
           <EfficiencyScore metrics={metrics} />
 
-          {/* Provider Cards */}
           <section>
             <h2 className="section-title text-center mb-6">
               🖥️ Live Instance Metrics
@@ -146,7 +164,6 @@ function App() {
             </div>
           </section>
 
-          {/* Charts */}
           <section>
             <h2 className="section-title text-center mb-6">
               📊 Performance Comparison
@@ -166,17 +183,16 @@ function App() {
             </div>
           </section>
 
-          {/* Recommendations */}
           <RecommendationPanel metrics={metrics} />
 
-          {/* Footer */}
-          <footer className="text-center text-xs text-text-muted py-6 border-t border-sage-100">
-            <p>🌿 EcoScale · Built for green cloud computing awareness</p>
+          <footer className="text-center text-xs text-text-muted py-6
+                             border-t border-sage-100">
+            <p>🌿 EcoScale · Green Cloud Computing Awareness</p>
             <p className="mt-1 font-mono">
-              AWS EC2 t2.micro · Cloudflare Workers Free Tier · Mock data simulation
+              AWS EC2 t3.micro · ap-south-1 (Mumbai) · 
+              Cloudflare Workers · Edge (SIN) · Live data
             </p>
           </footer>
-
         </main>
       </div>
     </div>
