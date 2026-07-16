@@ -255,10 +255,6 @@ EcoScale highlights how infrastructure choices affect carbon emissions:
 ## 👩‍💻 Author
 
 **Theekshna J**
-M.Tech Computer Science
-Cloud & Green Computing Enthusiast
-
----
 
 ## 📄 License
 
